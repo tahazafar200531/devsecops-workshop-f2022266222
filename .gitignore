@@ -1,0 +1,11 @@
+# GitHub Actions runner
+actions-runner/
+
+# Node
+node_modules/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
