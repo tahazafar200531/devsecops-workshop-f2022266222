@@ -7,6 +7,8 @@ on:
 jobs:
   pipeline:
     runs-on: self-hosted
+    env:
+      KUBECONFIG: ${{ runner.home }}/.kube/config   # Make kubectl point to Minikube kubeconfig
 
     steps:
     - uses: actions/checkout@v4
@@ -48,7 +50,7 @@ jobs:
         docker push ghcr.io/${{ github.repository_owner }}/devsecops-app:$VERSION
         docker push ghcr.io/${{ github.repository_owner }}/devsecops-app:latest
 
-    - name: Create GHCR Secret
+    - name: Create GHCR Secret in Kubernetes
       run: |
         kubectl delete secret ghcr-secret --ignore-not-found=true
         kubectl create secret docker-registry ghcr-secret \
@@ -57,7 +59,7 @@ jobs:
           --docker-password=${{ secrets.GHCR_PAT }} \
           --docker-email=dummy@example.com
 
-    - name: Apply Manifests
+    - name: Apply Kubernetes Manifests
       run: kubectl apply -f k8s/
 
     - name: Patch Deployment With Version
@@ -65,5 +67,5 @@ jobs:
         VERSION=${{ steps.version.outputs.version }}
         kubectl set image deployment/devsecops-app web=ghcr.io/${{ github.repository_owner }}/devsecops-app:$VERSION
 
-    - name: Wait for Rollout
+    - name: Wait for Deployment Rollout
       run: kubectl rollout status deployment/devsecops-app
